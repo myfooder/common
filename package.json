@@ -1,6 +1,6 @@
 {
   "name": "@fooder-app/common",
-  "version": "1.0.0",
+  "version": "0.0.1",
   "description": "A common core between all fooder projects",
   "main": "lib/index.js",
   "types": "lib/index.d.ts",
@@ -10,6 +10,8 @@
     "build": "npm run clean && npm run format && tsc"
   },
   "author": "Niklas Vlach",
+  "bugs": "https://github.com/myfooder/common/issues",
+  "repository": "https://github.com/myfooder/common",
   "license": "ISC",
   "devDependencies": {
     "prettier": "^3.2.5",
