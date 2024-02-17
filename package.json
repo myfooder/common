@@ -1,6 +1,6 @@
 {
   "name": "@fooder-app/common",
-  "version": "0.0.1",
+  "version": "0.0.2",
   "description": "A common core between all fooder projects",
   "main": "lib/index.js",
   "types": "lib/index.d.ts",
