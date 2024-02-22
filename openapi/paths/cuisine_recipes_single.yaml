@@ -1,0 +1,21 @@
+get:
+  summary: ''
+  description: ''
+  parameters:
+    - in: path
+      name: recipeId
+      schema:
+        type: string
+        format: uuid
+      required: true
+      description: TODO
+  operationId: 'get-recipe-details'
+  tags:
+    - Cuisine
+  responses:
+    '200':
+      description: lorem ipsum
+      content:
+        application/json:
+          schema:
+            $ref: '../components/schemas/Recipe.yaml'

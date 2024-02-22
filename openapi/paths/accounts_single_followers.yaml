@@ -1,0 +1,53 @@
+parameters:
+  - in: path
+    name: accountId
+    schema:
+      type: string
+      format: uuid
+    required: true
+    description: The ID of the Account in the database.
+get:
+  operationId: 'get-account-followers'
+  description: 'Accounts which follow the given account, if network is not hidden by the account owner.'
+  tags:
+    - Accounts
+  security:
+    - client-auth:
+        - 'read:accounts'
+  parameters:
+    - in: query
+      name: max_id
+      description: Internal parameter. Use HTTP Link header for pagination.
+      schema:
+        type: string
+    - in: query
+      name: since_id
+      description: Internal parameter. Use HTTP Link header for pagination.
+      schema:
+        type: string
+    - in: query
+      name: min_id
+      description: Internal parameter. Use HTTP Link header for pagination.
+      schema:
+        type: string
+    - in: query
+      name: limit
+      description: Integer. Maximum number of results to return. Defaults to 40 accounts. Max 80 accounts.
+      schema:
+        type: number
+        format: int32
+  responses:
+    200:
+      description: OK
+      content:
+        application/json:
+          schema:
+            type: array
+            items:
+              $ref: '../components/schemas/Account.yaml'
+    401:
+      $ref: '../components/responses/InvalidAccessToken.yaml'
+    404:
+      $ref: '../components/responses/AccountNotFound.yaml'
+    410:
+      description: Account is suspended

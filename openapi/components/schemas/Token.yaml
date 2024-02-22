@@ -1,0 +1,21 @@
+type: object
+description: Represents an OAuth token used for authenticating with the API and performing actions.
+required:
+    - access_token
+    - token_type
+    - scope
+    - created_at
+properties:
+    access_token:
+        type: string
+        description: An OAuth token to be used for authorization.
+    token_type:
+        type: string
+        description: The OAuth token type. Mastodon uses Bearer tokens.
+    scope:
+        type: string
+        description: The OAuth scopes granted by this token, space-separated.
+    created_at:
+        type: string
+        format: date-time
+        description: When the token was generated.

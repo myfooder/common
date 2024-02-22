@@ -1,0 +1,17 @@
+type: object
+description: Represents an application that interfaces with the REST API to access accounts or post statuses.
+required:
+  - name
+properties:
+  name:
+    type: string
+    description: The name of your application.
+  website:
+    type: string
+    description: The website associated with your application.
+  client_id:
+    type: string
+    description: Client ID key, to be used for obtaining OAuth tokens
+  client_secret:
+    type: string
+    description: Client secret key, to be used for obtaining OAuth tokens

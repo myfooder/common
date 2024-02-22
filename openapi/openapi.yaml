@@ -1,0 +1,112 @@
+openapi: 3.0.3
+info:
+  title: Fooder
+  description: REST API for Fooder Instances
+  version: 1.0.0
+servers:
+  - url: https://api.fooder-app.com
+    description: Public Instance
+paths:
+  /accounts:
+    $ref: paths/accounts.yaml
+  /accounts/verify_credentials:
+    $ref: paths/accounts_verify_credentials.yaml
+  /accounts/update_credentials:
+    $ref: paths/accounts_update_credentials.yaml
+  /accounts/{accountId}:
+    $ref: paths/accounts_single.yaml
+  /accounts/{accountId}/followers:
+    $ref: paths/accounts_single_followers.yaml
+  /accounts/{accountId}/following:
+    $ref: paths/accounts_single_following.yaml
+  /accounts/{accountId}/follow:
+    $ref: paths/accounts_single_follow.yaml
+  /accounts/{accountId}/unfollow:
+    $ref: paths/accounts_single_unfollow.yaml
+  /accounts/{accountId}/block:
+    $ref: paths/accounts_single_block.yaml
+  /accounts/{accountId}/unblock:
+    $ref: paths/accounts_single_unblock.yaml
+  /accounts/relationships:
+    $ref: paths/accounts_relationships.yaml
+  /accounts/search:
+    $ref: paths/accounts_search.yaml
+  /accounts/lookup:
+    $ref: paths/accounts_lookup.yaml
+  /apps:
+    $ref: paths/apps.yaml
+  /apps/verify_credentials:
+    $ref: paths/apps_verify_credentials.yaml
+  /blocks:
+    $ref: paths/blocks.yaml
+  /cuisine:
+    $ref: paths/cuisine.yaml
+  /cuisine/recipes:
+    $ref: paths/cuisine_recipes.yaml
+  /cuisine/recipes/{recipeId}:
+    $ref: paths/cuisine_recipes_single.yaml
+  /cuisine/recipes/{recipeId}/translate:
+    $ref: paths/cuisine_recipes_single_translate.yaml
+  /cuisine/cookbooks/:
+    $ref: paths/cuisine_cookbooks.yaml
+  /cuisine/cookbooks/{cookbookId}:
+    $ref: paths/cuisine_cookbooks_single.yaml
+  /cuisine/cookbooks/{cookbookId}/recipes:
+    $ref: paths/cuisine_cookbooks_single_recipes.yaml
+  /cuisine/cookbooks/{cookbookId}/recipes/{recipeId}:
+    $ref: paths/cuisine_cookbooks_single_recipes_single.yaml
+  /follow_requests:
+    $ref: paths/follow_requests.yaml
+  /follow_requests/{accountId}/authorize :
+    $ref: paths/follow_requests_authorize.yaml
+  /follow_requests/{accountId}/reject:
+    $ref: paths/follow_requests_reject.yaml
+  /health:
+    $ref: paths/health.yaml
+  /health/records:
+    $ref: paths/health_records.yaml
+  /health/records/{recordId}:
+    $ref: paths/health_records_single.yaml
+  /health/records/changes:
+    $ref: paths/health_records_changes.yaml
+  /health/records/changes/token:
+    $ref: paths/health_records_changes_token.yaml
+  /preferences:
+    $ref: paths/preferences.yaml
+  /profile/avatar:
+    $ref: paths/profile_avatar.yaml
+
+
+components:
+  securitySchemes:
+    user-token-auth:
+      type: oauth2
+      flows:
+        authorizationCode:
+          authorizationUrl: /oauth/authorize
+          tokenUrl: /oauth/token
+          scopes:
+            read:accounts: ''
+            read:follows: ''
+            read:notifications: ''
+            read:search: ''
+            write:accounts: ''
+            write:follows: ''
+            write:notifications : ''
+    client-auth:
+      type: oauth2
+      flows:
+        clientCredentials:
+          tokenUrl: ''
+          refreshUrl: ''
+          scopes:
+            'write:accounts': ''
+            'read:accounts': ''
+
+tags:
+  - name: Accounts
+  - name: Applications
+  - name: Profile
+  - name: OAuth
+  - name: Cuisine
+  - name: Health

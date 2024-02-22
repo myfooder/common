@@ -1,0 +1,20 @@
+get:
+  operationId: 'lookup'
+  description: 'Quickly lookup a username to see if it is available, skipping WebFinger resolution.'
+  tags:
+    - Accounts
+  parameters:
+    - in: query
+      name: acct
+      description: The username or Webfinger address to lookup.
+      schema:
+        type: string
+  responses:
+    200:
+      description: OK
+      content:
+        application/json:
+          schema:
+            $ref: '../components/schemas/Account.yaml'
+    404:
+      $ref: '../components/responses/AccountNotFound.yaml'

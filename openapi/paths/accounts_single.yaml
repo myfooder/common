@@ -1,0 +1,26 @@
+parameters:
+  - in: path
+    name: accountId
+    schema:
+      type: string
+      format: uuid
+    required: true
+    description: The ID of the Account in the database.
+get:
+  operationId: 'get-account-details'
+  description: 'View information about a profile.'
+  tags:
+    - Accounts
+  responses:
+    200:
+      description: The Account record will be returned. Note that acct of local users does not include the domain name.
+      content:
+        application/json:
+          schema:
+            $ref: '../components/schemas/Account.yaml'
+    401:
+      $ref: '../components/responses/InvalidAccessToken.yaml'
+    404:
+      $ref: '../components/responses/AccountNotFound.yaml'
+    410:
+      description: Account is suspended

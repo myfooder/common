@@ -1,0 +1,33 @@
+parameters:
+  - in: path
+    name: accountId
+    schema:
+      type: string
+      format: uuid
+    required: true
+    description: The ID of the Account in the database.
+post:
+  operationId: 'authorize-follow_request'
+  description: ''
+  tags:
+    - Accounts
+  security:
+    - user-token-auth:
+        - 'write:follows'
+  responses:
+    200:
+      description: Your Relationship with this account should be updated so that you are followed_by this account.
+      content:
+        application/json:
+          schema:
+            $ref: '../components/schemas/Relationship.yaml'
+    401:
+      $ref: '../components/responses/InvalidAccessToken.yaml'
+    404:
+      description: No pending follow request from that account ID
+      content:
+        application/json:
+          schema:
+            $ref: '../components/schemas/Error.yaml'
+          example:
+            error: Record not found

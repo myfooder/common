@@ -1,0 +1,29 @@
+parameters:
+  - in: path
+    name: accountId
+    schema:
+      type: string
+      format: uuid
+    required: true
+    description: The ID of the Account in the database.
+post:
+  operationId: 'unfollow-account'
+  description: Unfollow the given account.
+  tags:
+    - Accounts
+  security:
+    - user-token-auth:
+        - write:follows
+  responses:
+    200:
+      description: Successfully unfollowed, or account was already not followed
+      content:
+        application/json:
+          schema:
+            $ref: '../components/schemas/Relationship.yaml'
+    401:
+      $ref: '../components/responses/InvalidAccessToken.yaml'
+    404:
+      $ref: '../components/responses/AccountNotFound.yaml'
+    422:
+      $ref: '../components/responses/RequiresAuthenticatedUser.yaml'

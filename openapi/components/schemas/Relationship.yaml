@@ -1,0 +1,30 @@
+type: object
+description: Represents the relationship between accounts, such as following / blocking / muting / etc.
+required:
+  - id
+properties:
+  id:
+    type: string
+    format: uuid
+    description: The account ID.
+  following:
+    type: boolean
+    description: Are you following this user?
+  followed_by:
+    type: boolean
+    description: Are you followed by this user?
+  blocking:
+    type: boolean
+    description: Are you blocking this user?
+  blocked_by:
+    type: boolean
+    description: Is this user blocking you?
+  requested:
+    type: boolean
+    description: Do you have a pending follow request for this user?
+  requested_by:
+    type: boolean
+    description: Has this user requested to follow you?
+  domain_blocking:
+    type: boolean
+    description: Are you blocking this user’s domain?

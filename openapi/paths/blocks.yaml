@@ -1,0 +1,41 @@
+get:
+  operationId: 'view-blocked-accounts'
+  description: 'View your blocks. See also accounts/:id/{block,unblock}'
+  tags:
+    - Accounts
+  security:
+    - user-token-auth:
+        - 'read:blocks'
+  parameters:
+    - in: query
+      name: max_id
+      description: Internal parameter. Use HTTP Link header for pagination.
+      schema:
+        type: string
+    - in: query
+      name: since_id
+      description: Internal parameter. Use HTTP Link header for pagination.
+      schema:
+        type: string
+    - in: query
+      name: min_id
+      description: Internal parameter. Use HTTP Link header for pagination.
+      schema:
+        type: string
+    - in: query
+      name: limit
+      description: Integer. Maximum number of results to return. Defaults to 40 accounts. Max 80 accounts.
+      schema:
+        type: number
+        format: int32
+  responses:
+    200:
+      description: OK
+      content:
+        application/json:
+          schema:
+            type: array
+            items:
+              $ref: '../components/schemas/Account.yaml'
+    401:
+      $ref: '../components/responses/InvalidAccessToken.yaml'

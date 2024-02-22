@@ -1,0 +1,16 @@
+type: object
+description: Represents an OAuth token used for authenticating with the API and performing actions.
+required:
+    - error
+properties:
+    error:
+        type: string
+    description:
+        type: string
+    details:
+        anyOf:
+            - type: string
+            - type: object
+            - type: array
+              items:
+                  $ref: ./Error.yaml

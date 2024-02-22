@@ -1,0 +1,35 @@
+parameters:
+  - in: path
+    name: accountId
+    schema:
+      type: string
+      format: uuid
+    required: true
+    description: The ID of the Account in the database.
+post:
+  operationId: 'follow-account'
+  description: Follow the given account.
+  tags:
+    - Accounts
+  security:
+    - user-token-auth:
+        - write:follows
+  responses:
+    200:
+      description: Successfully followed, or account was already followed
+      content:
+        application/json:
+          schema:
+            $ref: '../components/schemas/Relationship.yaml'
+    401:
+      $ref: '../components/responses/InvalidAccessToken.yaml'
+    403:
+      description: Trying to follow someone that you block or that blocks you
+      content:
+        application/json:
+          schema:
+            $ref: '../components/schemas/Error.yaml'
+          example:
+            error: This action is not allowed
+    422:
+      $ref: '../components/responses/RequiresAuthenticatedUser.yaml'

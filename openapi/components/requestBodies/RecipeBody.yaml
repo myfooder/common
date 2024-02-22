@@ -1,0 +1,6 @@
+description: lorem ipsum 2
+required: true
+content:
+  application/json:
+    schema:
+      $ref: ..\schemas\Recipe.yaml

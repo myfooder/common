@@ -1,0 +1,17 @@
+get:
+  operationId: 'get-account-preferences'
+  description: 'Preferences defined by the user in their account settings.'
+  tags:
+    - Accounts
+  security:
+    - user-token-auth:
+        - 'read:accounts'
+  responses:
+    200:
+      description: OK
+      content:
+        application/json:
+          schema:
+            type: object
+    401:
+      $ref: '../components/responses/InvalidAccessToken.yaml'

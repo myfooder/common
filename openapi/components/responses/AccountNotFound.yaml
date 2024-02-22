@@ -1,0 +1,7 @@
+description: Account does not exist
+content:
+  application/json:
+    schema:
+      $ref: '../schemas/Error.yaml'
+    example:
+      error: Record not found

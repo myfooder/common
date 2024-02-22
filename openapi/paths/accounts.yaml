@@ -1,0 +1,73 @@
+post:
+  operationId: 'create-account'
+  description: Creates a user and account records. Returns an account access token for the app that initiated the request. The app should save this token for later, and should wait for the user to confirm their account by clicking a link in their email inbox.
+  tags:
+    - Accounts
+  security:
+    - client-auth:
+        - 'write:accounts'
+  requestBody:
+    content:
+      application/json:
+        schema:
+          type: object
+          required:
+            - username
+          properties:
+            username:
+              type: string
+              description: The desired username for the account
+            email:
+              type: string
+              format: email
+              description: The email address to be used for login
+            password:
+              type: string
+              format: password
+              description: The password to be used for login
+            agreement:
+              type: boolean
+              description: Whether the user agrees to the local rules, terms, and policies. These should be presented to the user in order to allow them to consent before setting this parameter to TRUE.
+            locale:
+              type: string
+              format: locale
+              description: The language of the confirmation email that will be sent.
+            reason:
+              type: string
+              description: If registrations require manual approval, this text will be reviewed by moderators.
+  responses:
+    200:
+      description: OK
+      content:
+        application/json:
+          schema:
+            $ref: '../components/schemas/Token.yaml'
+    401:
+      $ref: '../components/responses/InvalidAccessToken.yaml'
+    422:
+      description: The details parameter contains all detected errors. Its structure is a Hash with the key being the erroneous parameter, and its value being an array of all errors found. ( https://docs.joinmastodon.org/methods/accounts/#422-unprocessable-entity )
+      content:
+        application/json:
+          schema:
+            $ref: '../components/schemas/Error.yaml'
+          example:
+            error: "Validation failed: Password can't be blank, Username must contain only letters, numbers and underscores, Agreement must be accepted"
+            details:
+              password:
+                error: ERR_BLANK
+                description: "can't be blank"
+              username:
+                error: ERR_INVALID
+                description: "must contain only letters, numbers and underscores"
+              agreement:
+                error: ERR_ACCEPTED
+                description: "must be accepted"
+    429:
+      description: Too many requests
+      content:
+        application/json:
+          schema:
+            $ref: '../components/schemas/Error.yaml'
+          example:
+            error: Too many requests
+

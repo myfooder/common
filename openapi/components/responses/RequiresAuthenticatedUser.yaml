@@ -1,0 +1,7 @@
+description: Token does not have an authorized user
+content:
+  application/json:
+    schema:
+      $ref: '../schemas/Error.yaml'
+    example:
+      error: This method requires an authenticated user

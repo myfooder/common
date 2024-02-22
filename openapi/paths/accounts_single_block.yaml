@@ -1,0 +1,27 @@
+parameters:
+  - in: path
+    name: accountId
+    schema:
+      type: string
+      format: uuid
+    required: true
+    description: The ID of the Account in the database.
+post:
+  operationId: 'block-account'
+  description: Block the given account. Clients should filter resources from this account if received
+  tags:
+    - Accounts
+  security:
+    - user-token-auth:
+        - write:blocks
+  responses:
+    200:
+      description: Successfully blocked, or account was already blocked
+      content:
+        application/json:
+          schema:
+            $ref: '../components/schemas/Relationship.yaml'
+    401:
+      $ref: '../components/responses/InvalidAccessToken.yaml'
+    422:
+      $ref: '../components/responses/RequiresAuthenticatedUser.yaml'

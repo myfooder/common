@@ -1,0 +1,10 @@
+get:
+  summary: ''
+  description: ''
+  parameters: []
+  operationId: ''
+  tags:
+    - Cuisine
+  responses:
+    default:
+      description: Default response

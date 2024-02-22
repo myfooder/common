@@ -1,0 +1,8 @@
+type: object
+description: lorem ipsum health
+required:
+  - id
+properties:
+  id:
+    type: string
+    format: uuid

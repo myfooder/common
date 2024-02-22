@@ -1,0 +1,53 @@
+get:
+  operationId: 'search-accounts'
+  description: 'Search for matching accounts by username or display name.'
+  tags:
+    - Accounts
+  security:
+    - user-token-auth:
+        - read:accounts
+  parameters:
+    - in: query
+      name: q
+      description: Search query for accounts.
+      schema:
+        type: string
+    - in: query
+      name: limit
+      description: Maximum number of results. Defaults to 40 accounts. Max 80 accounts.
+      schema:
+        type: number
+        format: int32
+    - in: query
+      name: offset
+      description: Skip the first n results.
+      schema:
+        type: number
+        format: int32
+    - in: query
+      name: resolve
+      description: Attempt WebFinger lookup. Defaults to false. Use this when q is an exact address.
+      schema:
+        type: boolean
+    - in: query
+      name: following
+      description: Limit the search to users you are following. Defaults to false.
+      schema:
+        type: boolean
+  responses:
+    200:
+      description: OK
+      content:
+        application/json:
+          schema:
+            type: array
+            items:
+              $ref: '../components/schemas/Account.yaml'
+    503:
+      description: resolve=true, but the domain part of the user@domain address is not a currently live website
+      content:
+        application/json:
+          schema:
+            $ref: '../components/schemas/Error.yaml'
+          example:
+            error: Remote data could not be fetched

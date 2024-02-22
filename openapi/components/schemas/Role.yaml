@@ -1,0 +1,31 @@
+type: object
+description: Represents a custom user role that grants permissions.
+required:
+    - id
+    - name
+    - color
+    - permissions
+    - highlighted
+properties:
+    id:
+        type: number
+        format: int32
+        description: The ID of the Role in the database.
+    name:
+        type: string
+        description: The name of the role.
+    color:
+        type: string
+        format: color
+        description: >-
+            The hex code assigned to this role. If no hex code is assigned, the string
+            will be empty.
+    permissions:
+        type: number
+        format: int32
+        description: >-
+            A bitmask that represents the sum of all permissions granted to the role.
+            ( https://docs.joinmastodon.org/entities/Role/#permission-flags )
+    highlighted:
+        type: boolean
+        description: Whether the role is publicly visible as a badge on user profiles.

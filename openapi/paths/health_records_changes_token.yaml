@@ -1,0 +1,10 @@
+get:
+  summary: ''
+  description: ''
+  parameters: []
+  operationId: ''
+  tags:
+    - Health
+  responses:
+    default:
+      description: Default response

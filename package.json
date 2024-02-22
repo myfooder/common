@@ -1,12 +1,13 @@
 {
   "name": "@fooder-app/common",
-  "version": "0.0.2",
+  "version": "0.0.3",
   "description": "A common core between all fooder projects",
   "main": "lib/index.js",
   "types": "lib/index.d.ts",
   "scripts": {
     "clean": "rimraf lib",
     "format": "prettier src --write",
+    "prepare": "npm run build",
     "build": "npm run clean && npm run format && tsc"
   },
   "author": "Niklas Vlach",

@@ -1,0 +1,7 @@
+description: Invalid or missing Authorization header
+content:
+  application/json:
+    schema:
+      $ref: '../schemas/Error.yaml'
+    example:
+      error: The access token is invalid

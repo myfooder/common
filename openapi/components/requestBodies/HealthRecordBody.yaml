@@ -1,0 +1,6 @@
+description: lorem ipsum health body
+required: true
+content:
+  application/json:
+    schema:
+      $ref: ..\schemas\HealthRecord.yaml
