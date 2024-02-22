@@ -1,0 +1,1181 @@
+openapi: 3.0.3
+info:
+  title: Fooder
+  description: REST API for Fooder Instances
+  version: 1.0.0
+servers:
+  - url: 'https://api.fooder-app.com'
+    description: Public Instance
+paths:
+  /accounts:
+    post:
+      operationId: create-account
+      description: 'Creates a user and account records. Returns an account access token for the app that initiated the request. The app should save this token for later, and should wait for the user to confirm their account by clicking a link in their email inbox.'
+      tags:
+        - Accounts
+      security:
+        - client-auth:
+            - 'write:accounts'
+      requestBody:
+        content:
+          application/json:
+            schema:
+              type: object
+              required:
+                - username
+              properties:
+                username:
+                  type: string
+                  description: The desired username for the account
+                email:
+                  type: string
+                  format: email
+                  description: The email address to be used for login
+                password:
+                  type: string
+                  format: password
+                  description: The password to be used for login
+                agreement:
+                  type: boolean
+                  description: 'Whether the user agrees to the local rules, terms, and policies. These should be presented to the user in order to allow them to consent before setting this parameter to TRUE.'
+                locale:
+                  type: string
+                  format: locale
+                  description: The language of the confirmation email that will be sent.
+                reason:
+                  type: string
+                  description: 'If registrations require manual approval, this text will be reviewed by moderators.'
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema:
+                type: object
+                description: Represents an OAuth token used for authenticating with the API and performing actions.
+                required:
+                  - access_token
+                  - token_type
+                  - scope
+                  - created_at
+                properties:
+                  access_token:
+                    type: string
+                    description: An OAuth token to be used for authorization.
+                  token_type:
+                    type: string
+                    description: The OAuth token type. Mastodon uses Bearer tokens.
+                  scope:
+                    type: string
+                    description: 'The OAuth scopes granted by this token, space-separated.'
+                  created_at:
+                    type: string
+                    format: date-time
+                    description: When the token was generated.
+        '401':
+          $ref: '#/paths/~1blocks/get/responses/401'
+        '422':
+          description: 'The details parameter contains all detected errors. Its structure is a Hash with the key being the erroneous parameter, and its value being an array of all errors found. ( https://docs.joinmastodon.org/methods/accounts/#422-unprocessable-entity )'
+          content:
+            application/json:
+              schema:
+                $ref: '#/paths/~1apps/post/responses/422/content/application~1json/schema'
+              example:
+                error: 'Validation failed: Password can''t be blank, Username must contain only letters, numbers and underscores, Agreement must be accepted'
+                details:
+                  password:
+                    error: ERR_BLANK
+                    description: can't be blank
+                  username:
+                    error: ERR_INVALID
+                    description: 'must contain only letters, numbers and underscores'
+                  agreement:
+                    error: ERR_ACCEPTED
+                    description: must be accepted
+        '429':
+          description: Too many requests
+          content:
+            application/json:
+              schema:
+                $ref: '#/paths/~1apps/post/responses/422/content/application~1json/schema'
+              example:
+                error: Too many requests
+  /accounts/verify_credentials:
+    get:
+      operationId: verify-account-credentials
+      description: Test to make sure that the user token works.
+      tags:
+        - Accounts
+      security:
+        - user-token-auth:
+            - 'read:accounts'
+      responses:
+        '200':
+          description: 'Note the extra source property, which is not visible on accounts other than your own. Also note that plain-text is used within source and HTML is used for their corresponding properties such as note and fields.'
+          content:
+            application/json:
+              schema:
+                $ref: '#/paths/~1profile~1avatar/delete/responses/200/content/application~1json/schema'
+        '401':
+          $ref: '#/paths/~1blocks/get/responses/401'
+        '403':
+          description: 'Your user account is currently disabled, missing a confirmed email address, or pending approval.'
+          content:
+            application/json:
+              schema:
+                $ref: '#/paths/~1apps/post/responses/422/content/application~1json/schema'
+              examples:
+                disabled:
+                  value:
+                    error: Your login is currently disabled
+                unconfirmed:
+                  value:
+                    error: Your login is missing a confirmed e-mail address
+                unapproved:
+                  value:
+                    error: Your login is currently pending approval
+        '422':
+          $ref: '#/paths/~1accounts~1relationships/get/responses/422'
+  /accounts/update_credentials:
+    patch:
+      description: Update the user’s display and preferences.
+      operationId: update-account-credentials
+      tags:
+        - Accounts
+      security:
+        - user-token-auth:
+            - 'write:accounts'
+      requestBody:
+        content:
+          application/json:
+            schema:
+              type: object
+              description: Hash of updated fields
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema:
+                $ref: '#/paths/~1profile~1avatar/delete/responses/200/content/application~1json/schema'
+        '401':
+          $ref: '#/paths/~1blocks/get/responses/401'
+        '422':
+          $ref: '#/paths/~1accounts~1relationships/get/responses/422'
+  '/accounts/{accountId}':
+    parameters:
+      - in: path
+        name: accountId
+        schema:
+          type: string
+          format: uuid
+        required: true
+        description: The ID of the Account in the database.
+    get:
+      operationId: get-account-details
+      description: View information about a profile.
+      tags:
+        - Accounts
+      responses:
+        '200':
+          description: The Account record will be returned. Note that acct of local users does not include the domain name.
+          content:
+            application/json:
+              schema:
+                $ref: '#/paths/~1accounts~1lookup/get/responses/200/content/application~1json/schema'
+        '401':
+          $ref: '#/paths/~1blocks/get/responses/401'
+        '404':
+          $ref: '#/paths/~1accounts~1lookup/get/responses/404'
+        '410':
+          description: Account is suspended
+  '/accounts/{accountId}/followers':
+    parameters:
+      - in: path
+        name: accountId
+        schema:
+          type: string
+          format: uuid
+        required: true
+        description: The ID of the Account in the database.
+    get:
+      operationId: get-account-followers
+      description: 'Accounts which follow the given account, if network is not hidden by the account owner.'
+      tags:
+        - Accounts
+      security:
+        - client-auth:
+            - 'read:accounts'
+      parameters:
+        - in: query
+          name: max_id
+          description: Internal parameter. Use HTTP Link header for pagination.
+          schema:
+            type: string
+        - in: query
+          name: since_id
+          description: Internal parameter. Use HTTP Link header for pagination.
+          schema:
+            type: string
+        - in: query
+          name: min_id
+          description: Internal parameter. Use HTTP Link header for pagination.
+          schema:
+            type: string
+        - in: query
+          name: limit
+          description: Integer. Maximum number of results to return. Defaults to 40 accounts. Max 80 accounts.
+          schema:
+            type: number
+            format: int32
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/paths/~1accounts~1lookup/get/responses/200/content/application~1json/schema'
+        '401':
+          $ref: '#/paths/~1blocks/get/responses/401'
+        '404':
+          $ref: '#/paths/~1accounts~1lookup/get/responses/404'
+        '410':
+          description: Account is suspended
+  '/accounts/{accountId}/following':
+    parameters:
+      - in: path
+        name: accountId
+        schema:
+          type: string
+          format: uuid
+        required: true
+        description: The ID of the Account in the database.
+    get:
+      operationId: get-account-following
+      description: 'Accounts which the given account is following, if network is not hidden by the account owner.'
+      tags:
+        - Accounts
+      security:
+        - client-auth:
+            - 'read:accounts'
+      parameters:
+        - in: query
+          name: max_id
+          description: Internal parameter. Use HTTP Link header for pagination.
+          schema:
+            type: string
+        - in: query
+          name: since_id
+          description: Internal parameter. Use HTTP Link header for pagination.
+          schema:
+            type: string
+        - in: query
+          name: min_id
+          description: Internal parameter. Use HTTP Link header for pagination.
+          schema:
+            type: string
+        - in: query
+          name: limit
+          description: Integer. Maximum number of results to return. Defaults to 40 accounts. Max 80 accounts.
+          schema:
+            type: number
+            format: int32
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/paths/~1accounts~1lookup/get/responses/200/content/application~1json/schema'
+        '401':
+          $ref: '#/paths/~1blocks/get/responses/401'
+        '404':
+          $ref: '#/paths/~1accounts~1lookup/get/responses/404'
+        '410':
+          description: Account is suspended
+  '/accounts/{accountId}/follow':
+    parameters:
+      - in: path
+        name: accountId
+        schema:
+          type: string
+          format: uuid
+        required: true
+        description: The ID of the Account in the database.
+    post:
+      operationId: follow-account
+      description: Follow the given account.
+      tags:
+        - Accounts
+      security:
+        - user-token-auth:
+            - 'write:follows'
+      responses:
+        '200':
+          description: 'Successfully followed, or account was already followed'
+          content:
+            application/json:
+              schema:
+                $ref: '#/paths/~1accounts~1%7BaccountId%7D~1block/post/responses/200/content/application~1json/schema'
+        '401':
+          $ref: '#/paths/~1blocks/get/responses/401'
+        '403':
+          description: Trying to follow someone that you block or that blocks you
+          content:
+            application/json:
+              schema:
+                $ref: '#/paths/~1apps/post/responses/422/content/application~1json/schema'
+              example:
+                error: This action is not allowed
+        '422':
+          $ref: '#/paths/~1accounts~1relationships/get/responses/422'
+  '/accounts/{accountId}/unfollow':
+    parameters:
+      - in: path
+        name: accountId
+        schema:
+          type: string
+          format: uuid
+        required: true
+        description: The ID of the Account in the database.
+    post:
+      operationId: unfollow-account
+      description: Unfollow the given account.
+      tags:
+        - Accounts
+      security:
+        - user-token-auth:
+            - 'write:follows'
+      responses:
+        '200':
+          description: 'Successfully unfollowed, or account was already not followed'
+          content:
+            application/json:
+              schema:
+                $ref: '#/paths/~1accounts~1%7BaccountId%7D~1block/post/responses/200/content/application~1json/schema'
+        '401':
+          $ref: '#/paths/~1blocks/get/responses/401'
+        '404':
+          $ref: '#/paths/~1accounts~1lookup/get/responses/404'
+        '422':
+          $ref: '#/paths/~1accounts~1relationships/get/responses/422'
+  '/accounts/{accountId}/block':
+    parameters:
+      - in: path
+        name: accountId
+        schema:
+          type: string
+          format: uuid
+        required: true
+        description: The ID of the Account in the database.
+    post:
+      operationId: block-account
+      description: Block the given account. Clients should filter resources from this account if received
+      tags:
+        - Accounts
+      security:
+        - user-token-auth:
+            - 'write:blocks'
+      responses:
+        '200':
+          description: 'Successfully blocked, or account was already blocked'
+          content:
+            application/json:
+              schema:
+                type: object
+                description: 'Represents the relationship between accounts, such as following / blocking / muting / etc.'
+                required:
+                  - id
+                properties:
+                  id:
+                    type: string
+                    format: uuid
+                    description: The account ID.
+                  following:
+                    type: boolean
+                    description: Are you following this user?
+                  followed_by:
+                    type: boolean
+                    description: Are you followed by this user?
+                  blocking:
+                    type: boolean
+                    description: Are you blocking this user?
+                  blocked_by:
+                    type: boolean
+                    description: Is this user blocking you?
+                  requested:
+                    type: boolean
+                    description: Do you have a pending follow request for this user?
+                  requested_by:
+                    type: boolean
+                    description: Has this user requested to follow you?
+                  domain_blocking:
+                    type: boolean
+                    description: Are you blocking this user’s domain?
+        '401':
+          $ref: '#/paths/~1blocks/get/responses/401'
+        '422':
+          $ref: '#/paths/~1accounts~1relationships/get/responses/422'
+  '/accounts/{accountId}/unblock':
+    parameters:
+      - in: path
+        name: accountId
+        schema:
+          type: string
+          format: uuid
+        required: true
+        description: The ID of the Account in the database.
+    post:
+      operationId: unblock-account
+      description: Unblock the given account.
+      tags:
+        - Accounts
+      security:
+        - user-token-auth:
+            - 'write:blocks'
+      responses:
+        '200':
+          description: 'Successfully unblocked, or account was already not blocked'
+          content:
+            application/json:
+              schema:
+                $ref: '#/paths/~1accounts~1%7BaccountId%7D~1block/post/responses/200/content/application~1json/schema'
+        '401':
+          $ref: '#/paths/~1blocks/get/responses/401'
+        '404':
+          $ref: '#/paths/~1accounts~1lookup/get/responses/404'
+        '422':
+          $ref: '#/paths/~1accounts~1relationships/get/responses/422'
+  /accounts/relationships:
+    get:
+      operationId: get-relationships
+      description: 'Find out whether a given account is followed, blocked, muted, etc.'
+      tags:
+        - Accounts
+      security:
+        - user-token-auth:
+            - 'read:follows'
+      parameters:
+        - in: query
+          name: id
+          description: Check relationships for the provided account IDs.
+          schema:
+            type: array
+            items:
+              type: string
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/paths/~1accounts~1%7BaccountId%7D~1block/post/responses/200/content/application~1json/schema'
+        '401':
+          $ref: '#/paths/~1blocks/get/responses/401'
+        '422':
+          description: Token does not have an authorized user
+          content:
+            application/json:
+              schema:
+                $ref: '#/paths/~1apps/post/responses/422/content/application~1json/schema'
+              example:
+                error: This method requires an authenticated user
+  /accounts/search:
+    get:
+      operationId: search-accounts
+      description: Search for matching accounts by username or display name.
+      tags:
+        - Accounts
+      security:
+        - user-token-auth:
+            - 'read:accounts'
+      parameters:
+        - in: query
+          name: q
+          description: Search query for accounts.
+          schema:
+            type: string
+        - in: query
+          name: limit
+          description: Maximum number of results. Defaults to 40 accounts. Max 80 accounts.
+          schema:
+            type: number
+            format: int32
+        - in: query
+          name: offset
+          description: Skip the first n results.
+          schema:
+            type: number
+            format: int32
+        - in: query
+          name: resolve
+          description: Attempt WebFinger lookup. Defaults to false. Use this when q is an exact address.
+          schema:
+            type: boolean
+        - in: query
+          name: following
+          description: Limit the search to users you are following. Defaults to false.
+          schema:
+            type: boolean
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/paths/~1accounts~1lookup/get/responses/200/content/application~1json/schema'
+        '503':
+          description: 'resolve=true, but the domain part of the user@domain address is not a currently live website'
+          content:
+            application/json:
+              schema:
+                $ref: '#/paths/~1apps/post/responses/422/content/application~1json/schema'
+              example:
+                error: Remote data could not be fetched
+  /accounts/lookup:
+    get:
+      operationId: lookup
+      description: 'Quickly lookup a username to see if it is available, skipping WebFinger resolution.'
+      tags:
+        - Accounts
+      parameters:
+        - in: query
+          name: acct
+          description: The username or Webfinger address to lookup.
+          schema:
+            type: string
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema:
+                type: object
+                description: Represents a user of Fooder and their associated profile.
+                required:
+                  - id
+                  - username
+                  - acct
+                  - url
+                  - display_name
+                  - note
+                  - avatar
+                  - avatar_static
+                  - locked
+                  - created_at
+                  - recipes_count
+                  - followers_count
+                  - following_count
+                properties:
+                  id:
+                    type: string
+                    description: The account id.
+                  username:
+                    type: string
+                    description: 'The username of the account, not including domain.'
+                  acct:
+                    type: string
+                    description: 'The Webfinger account URI. Equal to username for local users, or username@domain for remote users.'
+                  url:
+                    type: string
+                    description: The location of the user’s profile page.
+                  display_name:
+                    type: string
+                    description: The profile’s display name.
+                  note:
+                    type: string
+                    description: he profile’s bio or description.
+                  avatar:
+                    type: string
+                    description: An image icon that is shown next to statuses and in the profile.
+                  avatar_static:
+                    type: string
+                    description: A static version of the avatar. Equal to avatar if its value is a static image; different if avatar is an animated GIF.
+                  locked:
+                    type: boolean
+                    description: Whether the account manually approves follow requests.
+                  discoverable:
+                    type: boolean
+                    description: Whether the account has opted into discovery features such as the profile directory.
+                  noindex:
+                    type: boolean
+                    description: Whether the local user has opted out of being indexed by search engines.
+                  moved:
+                    anyOf:
+                      - type: boolean
+                      - $ref: '#/paths/~1accounts~1lookup/get/responses/200/content/application~1json/schema'
+                    description: Indicates that the profile is currently inactive and that its user has moved to a new account.
+                  suspended:
+                    type: boolean
+                    description: An extra attribute returned only when an account is suspended.
+                  created_at:
+                    type: string
+                    format: date-time
+                    description: When the account was created.
+                  recipes_count:
+                    type: number
+                    format: int32
+                    description: How many recipes are attached to this account.
+                  followers_count:
+                    type: number
+                    format: int32
+                    description: The reported followers of this profile.
+                  following_count:
+                    type: number
+                    format: int32
+                    description: The reported follows of this profile.
+        '404':
+          description: Account does not exist
+          content:
+            application/json:
+              schema:
+                $ref: '#/paths/~1apps/post/responses/422/content/application~1json/schema'
+              example:
+                error: Record not found
+  /apps:
+    post:
+      operationId: create-app
+      description: Create a new application to obtain OAuth2 credentials.
+      tags:
+        - Applications
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required:
+                - client_name
+              properties:
+                client_name:
+                  type: string
+                  description: A name for your application
+                redirect_uris:
+                  type: string
+                  description: 'Where the user should be redirected after authorization. To display the authorization code to the user instead of redirecting to a web page, use urn:ietf:wg:oauth:2.0:oob in this parameter.'
+                scopes:
+                  type: string
+                  description: 'Space separated list of scopes. If none is provided, defaults to read. See OAuth Scopes for a list of possible scopes.'
+                website:
+                  type: string
+                  description: A URL to the homepage of your app
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema:
+                type: object
+                description: Represents an application that interfaces with the REST API to access accounts or post statuses.
+                required:
+                  - name
+                properties:
+                  name:
+                    type: string
+                    description: The name of your application.
+                  website:
+                    type: string
+                    description: The website associated with your application.
+                  client_id:
+                    type: string
+                    description: 'Client ID key, to be used for obtaining OAuth tokens'
+                  client_secret:
+                    type: string
+                    description: 'Client secret key, to be used for obtaining OAuth tokens'
+        '422':
+          description: 'If a required parameter is missing or improperly formatted, the request will fail.'
+          content:
+            application/json:
+              schema:
+                type: object
+                description: Represents an OAuth token used for authenticating with the API and performing actions.
+                required:
+                  - error
+                properties:
+                  error:
+                    type: string
+                  description:
+                    type: string
+                  details:
+                    anyOf:
+                      - type: string
+                      - type: object
+                      - type: array
+                        items:
+                          $ref: '#/paths/~1apps/post/responses/422/content/application~1json/schema'
+              example:
+                error: 'Validation failed: Redirect URI must be an absolute URI.'
+  /apps/verify_credentials:
+    get:
+      operationId: verify-app-credentials
+      description: Confirm that the app’s OAuth2 credentials work.
+      tags:
+        - Applications
+      security:
+        - client-auth:
+            - read
+      responses:
+        '200':
+          description: 'If the Authorization header was provided with a valid token, you should see your app returned as an Application entity.'
+          content:
+            application/json:
+              schema:
+                $ref: '#/paths/~1apps/post/responses/200/content/application~1json/schema'
+        '401':
+          description: 'If the Authorization header contains an invalid token, is malformed, or is not present, an error will be returned indicating an authorization failure.'
+          content:
+            application/json:
+              schema:
+                $ref: '#/paths/~1apps/post/responses/422/content/application~1json/schema'
+              example:
+                error: The access token is invalid
+  /blocks:
+    get:
+      operationId: view-blocked-accounts
+      description: 'View your blocks. See also accounts/:id/{block,unblock}'
+      tags:
+        - Accounts
+      security:
+        - user-token-auth:
+            - 'read:blocks'
+      parameters:
+        - in: query
+          name: max_id
+          description: Internal parameter. Use HTTP Link header for pagination.
+          schema:
+            type: string
+        - in: query
+          name: since_id
+          description: Internal parameter. Use HTTP Link header for pagination.
+          schema:
+            type: string
+        - in: query
+          name: min_id
+          description: Internal parameter. Use HTTP Link header for pagination.
+          schema:
+            type: string
+        - in: query
+          name: limit
+          description: Integer. Maximum number of results to return. Defaults to 40 accounts. Max 80 accounts.
+          schema:
+            type: number
+            format: int32
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/paths/~1accounts~1lookup/get/responses/200/content/application~1json/schema'
+        '401':
+          description: Invalid or missing Authorization header
+          content:
+            application/json:
+              schema:
+                $ref: '#/paths/~1apps/post/responses/422/content/application~1json/schema'
+              example:
+                error: The access token is invalid
+  /cuisine:
+    get:
+      summary: ''
+      description: ''
+      parameters: []
+      operationId: ''
+      tags:
+        - Cuisine
+      responses:
+        default:
+          description: Default response
+  /cuisine/recipes:
+    get:
+      summary: ''
+      description: ''
+      parameters: []
+      operationId: ''
+      tags:
+        - Cuisine
+      responses:
+        default:
+          description: Default response
+  '/cuisine/recipes/{recipeId}':
+    get:
+      summary: ''
+      description: ''
+      parameters:
+        - in: path
+          name: recipeId
+          schema:
+            type: string
+            format: uuid
+          required: true
+          description: TODO
+      operationId: get-recipe-details
+      tags:
+        - Cuisine
+      responses:
+        '200':
+          description: lorem ipsum
+          content:
+            application/json:
+              schema:
+                type: object
+                description: lorem ipsum
+                required:
+                  - id
+                properties:
+                  id:
+                    type: string
+                    format: uuid
+  '/cuisine/recipes/{recipeId}/translate':
+    get:
+      summary: ''
+      description: ''
+      parameters: []
+      operationId: ''
+      tags:
+        - Cuisine
+      responses:
+        default:
+          description: Default response
+  /cuisine/cookbooks/:
+    get:
+      summary: ''
+      description: ''
+      parameters: []
+      operationId: ''
+      tags:
+        - Cuisine
+      responses:
+        default:
+          description: Default response
+  '/cuisine/cookbooks/{cookbookId}':
+    get:
+      summary: ''
+      description: ''
+      parameters: []
+      operationId: ''
+      tags:
+        - Cuisine
+      responses:
+        default:
+          description: Default response
+  '/cuisine/cookbooks/{cookbookId}/recipes':
+    get:
+      summary: ''
+      description: ''
+      parameters: []
+      operationId: ''
+      tags:
+        - Cuisine
+      responses:
+        default:
+          description: Default response
+  '/cuisine/cookbooks/{cookbookId}/recipes/{recipeId}':
+    get:
+      summary: ''
+      description: ''
+      parameters: []
+      operationId: ''
+      tags:
+        - Cuisine
+      responses:
+        default:
+          description: Default response
+  /follow_requests:
+    get:
+      operationId: view-pending-follow-requests
+      description: View and manage follow requests.
+      tags:
+        - Accounts
+      security:
+        - user-token-auth:
+            - 'read:follows'
+      parameters:
+        - in: query
+          name: max_id
+          description: Internal parameter. Use HTTP Link header for pagination.
+          schema:
+            type: string
+        - in: query
+          name: since_id
+          description: Internal parameter. Use HTTP Link header for pagination.
+          schema:
+            type: string
+        - in: query
+          name: limit
+          description: Integer. Maximum number of results to return. Defaults to 40 accounts. Max 80 accounts.
+          schema:
+            type: number
+            format: int32
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/paths/~1accounts~1lookup/get/responses/200/content/application~1json/schema'
+        '401':
+          $ref: '#/paths/~1blocks/get/responses/401'
+  '/follow_requests/{accountId}/authorize':
+    parameters:
+      - in: path
+        name: accountId
+        schema:
+          type: string
+          format: uuid
+        required: true
+        description: The ID of the Account in the database.
+    post:
+      operationId: authorize-follow_request
+      description: ''
+      tags:
+        - Accounts
+      security:
+        - user-token-auth:
+            - 'write:follows'
+      responses:
+        '200':
+          description: Your Relationship with this account should be updated so that you are followed_by this account.
+          content:
+            application/json:
+              schema:
+                $ref: '#/paths/~1accounts~1%7BaccountId%7D~1block/post/responses/200/content/application~1json/schema'
+        '401':
+          $ref: '#/paths/~1blocks/get/responses/401'
+        '404':
+          description: No pending follow request from that account ID
+          content:
+            application/json:
+              schema:
+                $ref: '#/paths/~1apps/post/responses/422/content/application~1json/schema'
+              example:
+                error: Record not found
+  '/follow_requests/{accountId}/reject':
+    parameters:
+      - in: path
+        name: accountId
+        schema:
+          type: string
+          format: uuid
+        required: true
+        description: The ID of the Account in the database.
+    post:
+      operationId: reject-follow_request
+      description: ''
+      tags:
+        - Accounts
+      security:
+        - user-token-auth:
+            - 'write:follows'
+      responses:
+        '200':
+          description: Your Relationship with this account should be unchanged.
+          content:
+            application/json:
+              schema:
+                $ref: '#/paths/~1accounts~1%7BaccountId%7D~1block/post/responses/200/content/application~1json/schema'
+        '401':
+          $ref: '#/paths/~1blocks/get/responses/401'
+        '404':
+          description: No pending follow request from that account ID
+          content:
+            application/json:
+              schema:
+                $ref: '#/paths/~1apps/post/responses/422/content/application~1json/schema'
+              example:
+                error: Record not found
+  /health:
+    get:
+      summary: ''
+      description: ''
+      parameters: []
+      operationId: ''
+      tags:
+        - Health
+      responses:
+        default:
+          description: Default response
+  /health/records:
+    get:
+      summary: ''
+      description: ''
+      parameters: []
+      operationId: ''
+      tags:
+        - Health
+      responses:
+        default:
+          description: Default response
+  '/health/records/{recordId}':
+    get:
+      summary: ''
+      description: ''
+      parameters: []
+      operationId: ''
+      tags:
+        - Health
+      responses:
+        default:
+          description: Default response
+  /health/records/changes:
+    get:
+      summary: ''
+      description: ''
+      parameters: []
+      operationId: ''
+      tags:
+        - Health
+      responses:
+        default:
+          description: Default response
+  /health/records/changes/token:
+    get:
+      summary: ''
+      description: ''
+      parameters: []
+      operationId: ''
+      tags:
+        - Health
+      responses:
+        default:
+          description: Default response
+  /preferences:
+    get:
+      operationId: get-account-preferences
+      description: Preferences defined by the user in their account settings.
+      tags:
+        - Accounts
+      security:
+        - user-token-auth:
+            - 'read:accounts'
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema:
+                type: object
+        '401':
+          $ref: '#/paths/~1blocks/get/responses/401'
+  /profile/avatar:
+    delete:
+      operationId: delete-profile-avatar
+      description: Deletes the avatar associated with the user’s profile.
+      tags:
+        - Profile
+      security:
+        - user-token-auth:
+            - 'write:accounts'
+      responses:
+        '200':
+          description: 'The avatar was successfully deleted from the user’s profile. If there were no avatar associated with the profile, the response will still indicate a successful deletion.'
+          content:
+            application/json:
+              schema:
+                allOf:
+                  - $ref: '#/paths/~1accounts~1lookup/get/responses/200/content/application~1json/schema'
+                  - type: object
+                    required:
+                      - source
+                    properties:
+                      source:
+                        type: object
+                        required:
+                          - note
+                          - privacy
+                          - language
+                          - follow_requests_count
+                          - role
+                        properties:
+                          note:
+                            type: string
+                            description: 'Profile bio, in plain-text instead of in HTML.'
+                          privacy:
+                            type: string
+                            enum:
+                              - public
+                              - unlisted
+                              - private
+                            description: The default post privacy to be used for new recipes.
+                          language:
+                            type: string
+                            format: language
+                            description: The default posting language for new recipes.
+                          follow_requests_count:
+                            type: number
+                            format: int32
+                            description: The number of pending follow requests.
+                          role:
+                            type: object
+                            description: Represents a custom user role that grants permissions.
+                            required:
+                              - id
+                              - name
+                              - color
+                              - permissions
+                              - highlighted
+                            properties:
+                              id:
+                                type: number
+                                format: int32
+                                description: The ID of the Role in the database.
+                              name:
+                                type: string
+                                description: The name of the role.
+                              color:
+                                type: string
+                                format: color
+                                description: 'The hex code assigned to this role. If no hex code is assigned, the string will be empty.'
+                              permissions:
+                                type: number
+                                format: int32
+                                description: 'A bitmask that represents the sum of all permissions granted to the role. ( https://docs.joinmastodon.org/entities/Role/#permission-flags )'
+                              highlighted:
+                                type: boolean
+                                description: Whether the role is publicly visible as a badge on user profiles.
+        '401':
+          $ref: '#/paths/~1blocks/get/responses/401'
+components:
+  securitySchemes:
+    user-token-auth:
+      type: oauth2
+      flows:
+        authorizationCode:
+          authorizationUrl: /oauth/authorize
+          tokenUrl: /oauth/token
+          scopes:
+            'read:accounts': ''
+            'read:follows': ''
+            'read:notifications': ''
+            'read:search': ''
+            'write:accounts': ''
+            'write:follows': ''
+            'write:notifications': ''
+    client-auth:
+      type: oauth2
+      flows:
+        clientCredentials:
+          tokenUrl: ''
+          refreshUrl: ''
+          scopes:
+            'write:accounts': ''
+            'read:accounts': ''
+tags:
+  - name: Accounts
+  - name: Applications
+  - name: Profile
+  - name: OAuth
+  - name: Cuisine
+  - name: Health

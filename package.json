@@ -8,7 +8,9 @@
     "clean": "rimraf lib",
     "format": "prettier src --write",
     "prepare": "npm run build",
-    "build": "npm run clean && npm run format && tsc"
+    "build": "npm run clean && npm run format && tsc",
+    "build:openapi": "swagger-cli bundle openapi/openapi.yaml --outfile openapi.yaml --type yaml",
+    "validate:openapi": "swagger-cli validate openapi/openapi.yaml"
   },
   "author": "Niklas Vlach",
   "bugs": "https://github.com/myfooder/common/issues",
@@ -17,6 +19,7 @@
   "devDependencies": {
     "prettier": "^3.2.5",
     "rimraf": "^5.0.5",
+    "swagger-cli": "^4.0.4",
     "typescript": "^5.3.3"
   }
 }
